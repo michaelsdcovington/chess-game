@@ -55,8 +55,8 @@ document.getElementById("game").addEventListener("click", function (event) {
   if (!square.classList.contains("cell")) return;
 
   let parts = square.id.split("_");
-  const row = parts[1];
-  const col = parts[0];
+  const row = Number(parts[1]);
+  const col = Number(parts[0]);
   const piece = whereUAt[row - 1][col - 1];
 
   if (selected === null) {
@@ -70,15 +70,72 @@ document.getElementById("game").addEventListener("click", function (event) {
 
   document.getElementById(selected.col + "_" + selected.row).classList.remove("selected");
 
+
   if (selected.col === col && selected.row === row) {
     selected = null;
     return;
+  }
+
+  const movingPiece = whereUAt[selected.row - 1][selected.col - 1];
+
+  const rowDiff = Math.abs(row - selected.row);
+  const colDiff = Math.abs(col - selected.col);
+
+  if (movingPiece.name === "P") {
+      let direction = 1;
+      if (movingPiece.color === "black") {
+          direction = -1;
+      }
+
+      if (col !== selected.col || row !== selected.row + direction || piece !== null) {
+          selected = null;
+          return;
+      }
+  }
+
+  if (movingPiece.name === "B") {
+
+    let legal = (rowDiff >= 1 && colDiff >= 1 && rowDiff === colDiff);
+    if (!legal) {
+      selected = null;
+      return;
+    }
+  }
+
+  if (movingPiece.name === "N") {
+    let legal = ((rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2));
+    if (!legal) {
+      selected = null;
+      return;
+    }
+  }
+
+  if (movingPiece.name === "R") {
+    let legal = ((rowDiff <= 7 && colDiff === 0) || (rowDiff === 0 && colDiff <= 7));
+    if (!legal) {
+      selected = null;
+      return;
+    }
+  }
+
+  if (movingPiece.name === "Q") {
+    let legal = ((rowDiff <= 7 && colDiff === 0) || (rowDiff === 0 && colDiff <= 7) || (rowDiff === colDiff));
+    if (!legal) {
+      selected = null;
+      return;
+    }
+  }
+
+  if (movingPiece.name === "K") {
+    let legal = ((rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1) || (rowDiff === 1 && colDiff === 1));
+    if (!legal) {
+      selected = null;
+      return;
+    }
   }
 
   whereUAt[row - 1][col - 1] = whereUAt[selected.row - 1][selected.col - 1];
   whereUAt[selected.row - 1][selected.col - 1] = null;
   selected = null;
   draw();
-
-
 });
