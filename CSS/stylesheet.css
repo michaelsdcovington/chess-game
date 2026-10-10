@@ -1,16 +1,36 @@
 #game {
     display: grid;
     grid-template-columns: repeat(9, 50px);
+
 }
 
 .cell {
     width: 50px;
     height: 50px;
     background-color: white;
+    transition: all 0.1s ease-in-out;
+    cursor: pointer;
+    z-index: 1;
+
+    font-size: 30px;
+}
+
+.cell img {
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+}
+
+.cell:hover{
+    background: navajowhite;
+    z-index: 2;
 }
 
 .grey {
     background-color: grey;
+}
+.white {
+    background-color:lightblue;
 }
 
 .cellletter {
@@ -20,5 +40,10 @@
     border: solid black 2px;
     text-align: center;
     width: 50%;
-    margin: 10px 80% 0 20%;
+    margin: 10px auto 0;
+}
+
+.selected {
+    outline: 3px solid gold;
+    outline-offset: -3px;
 }
