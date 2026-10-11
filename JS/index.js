@@ -1,5 +1,6 @@
 let selected = null;
 const points = { white: 0, black: 0 };
+let turn = 1;
 
 const row1 = [
     { name: "R", color: "white", points: 5 }, { name: "N", color: "white", points: 3 },
@@ -49,6 +50,23 @@ function draw(){
     }
   }
 }
+
+function pathIsClear(fromRow, fromCol, toRow, toCol) {
+    const rowStep = Math.sign(toRow - fromRow);
+    const colStep = Math.sign(toCol - fromCol);
+
+    let r = fromRow + rowStep;
+    let c = fromCol + colStep;
+
+    while (r !== toRow || c !== toCol) {
+        if (whereUAt[r - 1][c - 1] !== null) {
+            return false;
+        }
+        r += rowStep;
+        c += colStep;
+    }
+    return true;
+}
 draw();
 
 document.getElementById("game").addEventListener("click", function (event) {
@@ -73,28 +91,6 @@ document.getElementById("game").addEventListener("click", function (event) {
     selected = null;
     return;
   }
-
-  function pathIsClear(fromRow, fromCol, toRow, toCol) {
-      const rowStep = Math.sign(toRow - fromRow);
-      const colStep = Math.sign(toCol - fromCol);
-
-      let r = fromRow + rowStep;
-      let c = fromCol + colStep;
-
-      while (r !== toRow || c !== toCol) {
-          if (whereUAt[r - 1][c - 1] !== null) {
-              return false;
-          }
-          r += rowStep;
-          c += colStep;
-      }
-      return true;
-  }
-
-
-
-
-
 
   const movingPiece = whereUAt[selected.row - 1][selected.col - 1];
   const newPlace = whereUAt[row - 1][ col - 1];
@@ -184,7 +180,15 @@ document.getElementById("game").addEventListener("click", function (event) {
       selected = null;
       return;
     }
+  }
 
+  if (turn % 2 !== 0 && movingPiece.color === "black") {
+    selected = null;
+    return;
+  }
+  else if (turn % 2 === 0 && movingPiece.color === "white") {
+    selected = null;
+    return;
   }
 
   if (newPlace?.color === movingPiece.color){
@@ -201,4 +205,11 @@ document.getElementById("game").addEventListener("click", function (event) {
   whereUAt[selected.row - 1][selected.col - 1] = null;
   selected = null;
   draw();
+
+  turn += 1;
+  if (turn % 2 === 0) {
+    document.getElementById("turn").textContent = "It's black's turn!";
+  } else {
+    document.getElementById("turn").textContent = "It's white's turn!";
+  }
 });
