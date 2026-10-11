@@ -110,21 +110,29 @@ document.getElementById("game").addEventListener("click", function (event) {
       firstMove = -2;
     }
 
-    if (selected.row === 2) {
-      legal = ((colDiff === 0 && row <= selected.row + firstMove)); //pawns can move 2 on first move
+    if (selected.row === 2 && movingPiece.color === "white") {
+      legal = ((colDiff === 0 && row <= selected.row + firstMove && row > 2)); //pawns can move 2 on first move
+    }
+    else if (selected.row === 7 && movingPiece.color === "black") {
+      legal = ((colDiff === 0 && row >= selected.row + firstMove && row < 7)); //pawns can move 2 on first move
     }
     else {
       legal = ((colDiff === 0 && row === selected.row + difference)); //determines that the pawn can only go forward
     }
+    let capture = (newPlace !== null) && (col === selected.col + difference) && (row === selected.row);
 
-    if (!legal) {
+    if (!legal && !capture) {
           selected = null;
           return;
       }
+
+
     if (newPlace !== null) { //doesnt let pawns hit guys in their way
       selected = null;
       return;
     }
+
+
 
 
   }
