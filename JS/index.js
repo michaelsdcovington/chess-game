@@ -69,6 +69,80 @@ function pathIsClear(fromRow, fromCol, toRow, toCol) {
 }
 draw();
 
+function whereGo(startRow, startCol, endRow, endCol) {
+  let piece = whereUAt[startRow - 1][startCol - 1];
+  let newPlace = whereUAt[endRow - 1][endCol - 1];
+  let legal;
+  const colDiff = Math.abs(startCol - endCol);
+  const rowDiff = Math.abs(startRow - endRow);
+
+  if (piece.name === "P") {
+    let difference = 1;
+    let firstMove = 2;
+    if (piece.color === "black") { //makes both sides go the right way
+      difference = -1;
+      firstMove = -2;
+    }
+    legal = (colDiff === 1) && (endRow === startRow + difference);
+    if (piece.color === "black") { //makes both sides go the right way
+      difference = -1;
+    }
+    if ((newPlace !== null) && (colDiff === 1) && (endRow === startRow + difference)){ //pawn can capture diagonally
+      legal = true;
+    }
+    else if (startRow === 2 && piece.color === "white") {
+      legal = (newPlace === null && (colDiff === 0 && endRow <= startRow + firstMove && endRow > 2)); //pawns can move 2 on first move
+    }
+    else if (startRow === 7 && piece.color === "black") {
+      legal = (newPlace === null && (colDiff === 0 && endRow >= startRow + firstMove && endRow < 7)); //black pawns can move 2 on first move
+    }
+    else {
+      legal = (newPlace === null && colDiff === 0 && endRow === startRow + difference); //determines that the pawn can only go forward
+    }
+    if (!pathIsClear(startRow, startCol, endRow, endCol)) { //pawn cant jump over a guy
+      legal = false;
+    }
+  }
+
+  if (piece.name === "B") {
+    legal = (rowDiff >= 1 && colDiff >= 1 && rowDiff === colDiff);
+
+    if (!pathIsClear(startRow, startCol, endRow, endCol)) { //bishops cant jump over a guy
+      legal = false;
+    }
+  }
+
+  if (piece.name === "N") {
+    legal = ((rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2));
+  }
+
+  if (piece.name === "R") {
+    legal = ((rowDiff <= 7 && colDiff === 0) || (rowDiff === 0 && colDiff <= 7));
+    if (!pathIsClear(startRow, startCol, endRow, endCol)) { //rooks cant jump over a guy
+      legal = false;
+    }
+  }
+
+  if (piece.name === "Q") {
+    legal = ((rowDiff <= 7 && colDiff === 0) || (rowDiff === 0 && colDiff <= 7) || (rowDiff === colDiff));
+    if (!pathIsClear(startRow, startCol, endRow, endCol)) { //queens cant jump over a guy
+      legal = false;
+    }
+  }
+
+  if (piece.name === "K") {
+    legal = ((rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1) || (rowDiff === 1 && colDiff === 1));
+  }
+
+
+  if (legal) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
 document.getElementById("game").addEventListener("click", function (event) {
   const square = event.target; //thing that gets clicked is the square
   if (!square.classList.contains("cell")) return; //if theres no square there then nothing happens
@@ -94,92 +168,10 @@ document.getElementById("game").addEventListener("click", function (event) {
 
   const movingPiece = whereUAt[selected.row - 1][selected.col - 1];
   const newPlace = whereUAt[row - 1][ col - 1];
-  const rowDiff = Math.abs(row - selected.row);
-  const colDiff = Math.abs(col - selected.col);
-  let legal;
 
-  if (movingPiece.name === "P") {
-    let difference = 1;
-    let firstMove = 2;
-    if (movingPiece.color === "black") { //makes both sides go the right way
-      difference = -1;
-      firstMove = -2;
-    }
-
-    if (selected.row === 2 && movingPiece.color === "white") {
-      legal = (newPlace === null && (colDiff === 0 && row <= selected.row + firstMove && row > 2)); //pawns can move 2 on first move
-    }
-    else if (selected.row === 7 && movingPiece.color === "black") {
-      legal = (newPlace === null && (colDiff === 0 && row >= selected.row + firstMove && row < 7)); //pawns can move 2 on first move
-
-    }
-    else {
-      legal = (newPlace === null && colDiff === 0 && row === selected.row + difference); //determines that the pawn can only go forward
-    }
-
-    let capture = (newPlace !== null) && (colDiff === 1) && (row === selected.row + difference);
-
-    if (!legal && !capture) {
-          selected = null;
-          return;
-      }
-
-    if (!pathIsClear(row, col, selected.row, selected.col)) {
-      selected = null;
-      return;
-    }
-  }
-
-  if (movingPiece.name === "B") {
-    let legal = (rowDiff >= 1 && colDiff >= 1 && rowDiff === colDiff);
-    if (!legal) {
-      selected = null;
-      return;
-    }
-    if (!pathIsClear(row, col, selected.row, selected.col)) {
-      selected = null;
-      return;
-    }
-  }
-
-  if (movingPiece.name === "N") {
-    let legal = ((rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2));
-    if (!legal) {
-      selected = null;
-      return;
-    }
-  }
-
-  if (movingPiece.name === "R") {
-    let legal = ((rowDiff <= 7 && colDiff === 0) || (rowDiff === 0 && colDiff <= 7));
-    if (!legal) {
-      selected = null;
-      return;
-    }
-    if (!pathIsClear(row, col, selected.row, selected.col)) {
-      selected = null;
-      return;
-    }
-  }
-
-  if (movingPiece.name === "Q") {
-    let legal = ((rowDiff <= 7 && colDiff === 0) || (rowDiff === 0 && colDiff <= 7) || (rowDiff === colDiff));
-    if (!legal) {
-      selected = null;
-      return;
-    }
-    if (!pathIsClear(row, col, selected.row, selected.col)) {
-      selected = null;
-      return;
-    }
-  }
-
-  if (movingPiece.name === "K") {
-    let legal = ((rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1) || (rowDiff === 1 && colDiff === 1));
-    if (!legal) {
-      selected = null;
-      return;
-    }
+  if (!whereGo(selected.row, selected.col, row, col)) {
+    selected = null;
+    return;
   }
 
   if (turn % 2 !== 0 && movingPiece.color === "black") {
