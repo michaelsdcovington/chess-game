@@ -1,6 +1,7 @@
 let selected = null;
 const points = { white: 0, black: 0 };
 let turn = 1;
+let turnColor;
 
 const row1 = [
     { name: "R", color: "white", points: 5 }, { name: "N", color: "white", points: 3 },
@@ -59,11 +60,11 @@ function pathIsClear(fromRow, fromCol, toRow, toCol) {
     let c = fromCol + colStep;
 
     while (r !== toRow || c !== toCol) {
-        if (whereUAt[r - 1][c - 1] !== null) {
-            return false;
-        }
-        r += rowStep;
-        c += colStep;
+      if (whereUAt[r - 1][c - 1] !== null) {
+          return false;
+      }
+      r += rowStep;
+      c += colStep;
     }
     return true;
 }
@@ -76,6 +77,9 @@ function whereGo(startRow, startCol, endRow, endCol) {
   const colDiff = Math.abs(startCol - endCol);
   const rowDiff = Math.abs(startRow - endRow);
 
+  if (piece === null) {
+    return false;
+  }
   if (piece.name === "P") {
     let difference = 1;
     let firstMove = 2;
@@ -99,7 +103,7 @@ function whereGo(startRow, startCol, endRow, endCol) {
     else {
       legal = (newPlace === null && colDiff === 0 && endRow === startRow + difference); //determines that the pawn can only go forward
     }
-    if (!pathIsClear(startRow, startCol, endRow, endCol)) { //pawn cant jump over a guy
+    if (legal && !pathIsClear(startRow, startCol, endRow, endCol)) { //pawn cant jump over a guy
       legal = false;
     }
   }
@@ -107,7 +111,7 @@ function whereGo(startRow, startCol, endRow, endCol) {
   if (piece.name === "B") {
     legal = (rowDiff >= 1 && colDiff >= 1 && rowDiff === colDiff);
 
-    if (!pathIsClear(startRow, startCol, endRow, endCol)) { //bishops cant jump over a guy
+    if (legal && !pathIsClear(startRow, startCol, endRow, endCol)) { //bishops cant jump over a guy
       legal = false;
     }
   }
@@ -118,14 +122,14 @@ function whereGo(startRow, startCol, endRow, endCol) {
 
   if (piece.name === "R") {
     legal = ((rowDiff <= 7 && colDiff === 0) || (rowDiff === 0 && colDiff <= 7));
-    if (!pathIsClear(startRow, startCol, endRow, endCol)) { //rooks cant jump over a guy
+    if (legal && !pathIsClear(startRow, startCol, endRow, endCol)) { //rooks cant jump over a guy
       legal = false;
     }
   }
 
   if (piece.name === "Q") {
     legal = ((rowDiff <= 7 && colDiff === 0) || (rowDiff === 0 && colDiff <= 7) || (rowDiff === colDiff));
-    if (!pathIsClear(startRow, startCol, endRow, endCol)) { //queens cant jump over a guy
+    if (legal && !pathIsClear(startRow, startCol, endRow, endCol)) { //queens cant jump over a guy
       legal = false;
     }
   }
@@ -134,12 +138,35 @@ function whereGo(startRow, startCol, endRow, endCol) {
     legal = ((rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1) || (rowDiff === 1 && colDiff === 1));
   }
 
-
   if (legal) {
     return true;
   } else {
     return false;
   }
+}
+
+
+function findKing(color) {
+  for (let i = 1; i <= 8; i++) {
+    for (let j = 1; j <= 8; j++) { //check every piece
+      piece = whereUAt[i - 1][j - 1];
+      if (piece?.name === "K" && piece?.color === color) {
+        return { row: i, col: j };
+      }
+    }
+  }
+}
+
+function isBroAttacked(kRow, kCol, color) {
+  for (let i = 1; i <= 8; i++) {
+    for (let j = 1; j <= 8; j++) { //check every piece
+      piece = whereUAt[i - 1][j - 1];
+      if (whereGo(i, j, kRow, kCol) && piece?.color !== color)
+        return true;
+    }
+  }
+  return false;
+
 }
 
 
@@ -167,23 +194,31 @@ document.getElementById("game").addEventListener("click", function (event) {
   }
 
   const movingPiece = whereUAt[selected.row - 1][selected.col - 1];
-  const newPlace = whereUAt[row - 1][ col - 1];
+  const newPlace = whereUAt[row - 1][col - 1];
+
+
+  if (turn % 2 === 0) {
+    turnColor = "black";
+  }
+  else {
+    turnColor = "white";
+  }
+  //makes sure u cant move when its not your turn
+  if (turn % 2 !== 0 && movingPiece?.color === "black") {
+    selected = null;
+    return;
+  }
+  else if (turn % 2 === 0 && movingPiece?.color === "white") {
+    selected = null;
+    return;
+  }
+
+  if (newPlace?.color === movingPiece?.color){
+    selected = null;
+    return;
+  }
 
   if (!whereGo(selected.row, selected.col, row, col)) {
-    selected = null;
-    return;
-  }
-
-  if (turn % 2 !== 0 && movingPiece.color === "black") {
-    selected = null;
-    return;
-  }
-  else if (turn % 2 === 0 && movingPiece.color === "white") {
-    selected = null;
-    return;
-  }
-
-  if (newPlace?.color === movingPiece.color){
     selected = null;
     return;
   }
@@ -193,10 +228,21 @@ document.getElementById("game").addEventListener("click", function (event) {
     console.log(points);
   }
 
-  whereUAt[row - 1][col - 1] = whereUAt[selected.row - 1][selected.col - 1];
+  whereUAt[row - 1][col - 1] = whereUAt[selected.row - 1][selected.col - 1]; // moves piece
   whereUAt[selected.row - 1][selected.col - 1] = null;
+  console.log(turnColor);
+  if (isBroAttacked(findKing(turnColor).row, findKing(turnColor).col, turnColor)){ //checks if we r in check
+    whereUAt[row - 1][col - 1] = newPlace;
+    whereUAt[selected.row - 1][selected.col - 1] = movingPiece;
+    selected = null;
+    return;
+}
+
   selected = null;
-  draw();
+
+
+
+  draw(); //draws piece
 
   turn += 1;
   if (turn % 2 === 0) {
@@ -204,4 +250,5 @@ document.getElementById("game").addEventListener("click", function (event) {
   } else {
     document.getElementById("turn").textContent = "It's white's turn!";
   }
+
 });
